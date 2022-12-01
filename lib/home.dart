@@ -1,5 +1,5 @@
-
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:todoapp/widgets/todoitem.dart';
 import 'package:todoapp/model/todo.dart';
 
@@ -15,10 +15,37 @@ class _HomeState extends State<Home> {
   List<ToDo> _found = [];
   final _toDoController = TextEditingController();
 
+  String _haveStarted3Times = '';
+
+  Future<int> _getIntFromSharedPref() async {
+    final prefs = await SharedPreferences.getInstance();
+    final startupNumber = prefs.getInt('startupNumber');
+    if (startupNumber == null) {
+      return 0;
+    }
+    return startupNumber;
+  }
+
+  Future<void> _resetCounter() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt('startupNumber', 0);
+  }
+
+  Future<void> _incrementStartup() async {
+    final prefs = await SharedPreferences.getInstance();
+    int last = await _getIntFromSharedPref();
+    int current = last + 1;
+
+    await prefs.setInt('startupNumber', current);
+
+    setState(() => _haveStarted3Times = '$current Times');
+  }
+
   @override
   void initState() {
     _found = toDosList; // assign data
     super.initState();
+    _incrementStartup();
   }
 
   @override
@@ -28,8 +55,10 @@ class _HomeState extends State<Home> {
         appBar: _buildAppBar(),
         body: Stack(
           children: [
+            Text(_haveStarted3Times),
             Container(
-                padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 15),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 15, vertical: 15),
                 child: Column(
                   children: [
                     searchBox(),
@@ -61,9 +90,10 @@ class _HomeState extends State<Home> {
                 children: [
                   Expanded(
                     child: Container(
-                      margin: const EdgeInsets.only(bottom: 20, right: 20, left: 20),
-                      padding:
-                          const EdgeInsets.symmetric(horizontal: 20, vertical: 5),
+                      margin: const EdgeInsets.only(
+                          bottom: 20, right: 20, left: 20),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 20, vertical: 5),
                       decoration: BoxDecoration(
                         color: Colors.white,
                         boxShadow: const [
