@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:todoapp/widgets/todoitem.dart';
 import 'package:todoapp/model/todo.dart';
+import 'dart:convert';
 
 class Home extends StatefulWidget {
   const Home({Key? key}) : super(key: key);
@@ -10,8 +11,8 @@ class Home extends StatefulWidget {
   State<Home> createState() => _HomeState();
 }
 
-class _HomeState extends State<Home> {
-  final toDosList = ToDo.toDoList();
+class _HomeState extends State<Home> with WidgetsBindingObserver {
+  final toDosList = [];
   List<ToDo> _found = [];
   final _toDoController = TextEditingController();
 
@@ -24,6 +25,11 @@ class _HomeState extends State<Home> {
       return 0;
     }
     return startupNumber;
+  }
+
+  Future<void> _getToDoListFromSharedPref() async {
+    final prefs = await SharedPreferences.getInstance();
+    _found = jsonDecode(prefs.getString('todolist')!);
   }
 
   Future<void> _resetCounter() async {
@@ -43,9 +49,29 @@ class _HomeState extends State<Home> {
 
   @override
   void initState() {
-    _found = toDosList; // assign data
+    //_found =
+    _getToDoListFromSharedPref(); // assign data
     super.initState();
     _incrementStartup();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  Future<void> didChangeAppLifecycleState(AppLifecycleState state) async {
+    //setState(() {
+    if (AppLifecycleState.paused == state) {
+      //serialize list
+      final todostring = json.encode(_found);
+      //save to shared preferences
+      final prefs = await SharedPreferences.getInstance();
+      prefs.setString('todolist', todostring);
+    }
+    //});
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
   }
 
   @override
@@ -147,13 +173,13 @@ class _HomeState extends State<Home> {
 
   void _deleteToDoItem(String id) {
     setState(() {
-      toDosList.removeWhere((item) => item.id == id);
+      _found.removeWhere((item) => item.id == id);
     });
   }
 
   void _addToDoItem(String todo) {
     setState(() {
-      toDosList.add(ToDo(
+      _found.add(ToDo(
         id: DateTime.now().millisecondsSinceEpoch.toString(),
         toDoText: todo,
       ));
@@ -164,9 +190,9 @@ class _HomeState extends State<Home> {
   void _runFilter(String keyword) {
     List<ToDo> results = [];
     if (keyword.isEmpty) {
-      results = toDosList;
+      results = _found;
     } else {
-      results = toDosList
+      results = _found
           .where((item) =>
               item.toDoText!.toLowerCase().contains(keyword.toLowerCase()))
           .toList();
