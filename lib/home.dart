@@ -41,18 +41,6 @@ class _HomeState extends State<Home> {
     setState(() {});
   }
 
-  Future<void> didChangeAppLifecycleState(AppLifecycleState state) async {
-    //setState(() {
-    if (AppLifecycleState.paused == state) {
-      //serialize list
-      final todostring = json.encode(_found);
-      //save to shared preferences
-      final prefs = await SharedPreferences.getInstance();
-      prefs.setString('todolist', todostring);
-    }
-    //});
-  }
-
   @override
   void dispose() {
     super.dispose();
@@ -66,29 +54,35 @@ class _HomeState extends State<Home> {
         body: Stack(
           children: [
             Container(
+                height: 520,
                 padding:
                     const EdgeInsets.symmetric(horizontal: 15, vertical: 15),
                 child: Column(
                   children: [
                     searchBox(),
+                    Container(
+                      margin: const EdgeInsets.only(top: 15, bottom: 15),
+                      child: Center(
+                        child: const Text(
+                          "All ToDos",
+                          style: TextStyle(
+                              fontSize: 20, fontWeight: FontWeight.w500),
+                        ),
+                      ),
+                    ),
                     Expanded(
-                      child: ListView(
-                        children: [
-                          Container(
-                            margin: const EdgeInsets.only(top: 15, bottom: 20),
-                            child: const Text(
-                              "All ToDos",
-                              style: TextStyle(
-                                  fontSize: 30, fontWeight: FontWeight.w500),
-                            ),
-                          ),
-                          for (ToDo todoo in _found.reversed)
-                            ToDoItem(
-                              todo: todoo,
-                              onToDoChanged: _handleToDoChange,
-                              onDeleteItem: _deleteToDoItem,
-                            ),
-                        ],
+                      child: Material(
+                        color: const Color(0xFFEEEFF5),
+                        child: ListView(
+                          children: [
+                            for (ToDo todoo in _found.reversed)
+                              ToDoItem(
+                                todo: todoo,
+                                onToDoChanged: _handleToDoChange,
+                                onDeleteItem: _deleteToDoItem,
+                              ),
+                          ],
+                        ),
                       ),
                     )
                   ],
