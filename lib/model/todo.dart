@@ -5,10 +5,16 @@ class ToDo {
 
   ToDo({required this.id, required this.toDoText, this.isDone = false});
 
-  static List<ToDo> toDoList() {
-    return [
-      ToDo(id: '01', toDoText: 'Flutter', isDone: false),
-      ToDo(id: '02', toDoText: 'Emails', isDone: true),
-    ];
+  ToDo.fromMap(Map map)
+      : this.id = map["id"],
+        this.toDoText = map["todotext"],
+        this.isDone = map["isdone"];
+
+  Map toMap() {
+    return {
+      "id": this.id,
+      "todotext": this.toDoText,
+      "isdone": this.isDone,
+    };
   }
 }

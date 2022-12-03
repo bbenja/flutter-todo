@@ -11,49 +11,34 @@ class Home extends StatefulWidget {
   State<Home> createState() => _HomeState();
 }
 
-class _HomeState extends State<Home> with WidgetsBindingObserver {
-  final toDosList = [];
+class _HomeState extends State<Home> {
   List<ToDo> _found = [];
   final _toDoController = TextEditingController();
 
-  String _haveStarted3Times = '';
-
-  Future<int> _getIntFromSharedPref() async {
-    final prefs = await SharedPreferences.getInstance();
-    final startupNumber = prefs.getInt('startupNumber');
-    if (startupNumber == null) {
-      return 0;
-    }
-    return startupNumber;
-  }
-
-  Future<void> _getToDoListFromSharedPref() async {
-    final prefs = await SharedPreferences.getInstance();
-    _found = jsonDecode(prefs.getString('todolist')!);
-  }
-
-  Future<void> _resetCounter() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setInt('startupNumber', 0);
-  }
-
-  Future<void> _incrementStartup() async {
-    final prefs = await SharedPreferences.getInstance();
-    int last = await _getIntFromSharedPref();
-    int current = last + 1;
-
-    await prefs.setInt('startupNumber', current);
-
-    setState(() => _haveStarted3Times = '$current Times');
-  }
+  static late SharedPreferences sharedPreferences;
 
   @override
   void initState() {
-    //_found =
-    _getToDoListFromSharedPref(); // assign data
+    initSharedPreferences();
     super.initState();
-    _incrementStartup();
-    WidgetsBinding.instance.addObserver(this);
+  }
+
+  initSharedPreferences() async {
+    sharedPreferences = await SharedPreferences.getInstance();
+    loadData();
+  }
+
+  void saveData() {
+    List<String> slist =
+        _found.map((item) => json.encode(item.toMap())).toList();
+    sharedPreferences.setStringList("list", slist);
+    //print(slist);
+  }
+
+  void loadData() {
+    List<String> slist = sharedPreferences.getStringList("list")!;
+    _found = slist.map((item) => ToDo.fromMap(json.decode(item))).toList();
+    setState(() {});
   }
 
   Future<void> didChangeAppLifecycleState(AppLifecycleState state) async {
@@ -70,7 +55,6 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
 
   @override
   void dispose() {
-    WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
 
@@ -81,7 +65,6 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
         appBar: _buildAppBar(),
         body: Stack(
           children: [
-            Text(_haveStarted3Times),
             Container(
                 padding:
                     const EdgeInsets.symmetric(horizontal: 15, vertical: 15),
@@ -169,12 +152,14 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
     setState(() {
       todo.isDone = !todo.isDone;
     });
+    saveData();
   }
 
   void _deleteToDoItem(String id) {
     setState(() {
       _found.removeWhere((item) => item.id == id);
     });
+    saveData();
   }
 
   void _addToDoItem(String todo) {
@@ -185,6 +170,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
       ));
     });
     _toDoController.clear();
+    saveData();
   }
 
   void _runFilter(String keyword) {
