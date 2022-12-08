@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:todoapp/widgets/todoitem.dart';
 import 'package:todoapp/model/todo.dart';
+import 'package:todoapp/assets/colors.dart';
+//import 'package:todoapp/assets/46.JPG';
 import 'dart:convert';
 
 class Home extends StatefulWidget {
@@ -12,20 +14,21 @@ class Home extends StatefulWidget {
 }
 
 class _HomeState extends State<Home> {
-  List<ToDo> _found = [];
+  List<ToDo> personallist = [];
+  List<ToDo> worklist = [];
   final _toDoController = TextEditingController();
   static late SharedPreferences sharedPreferences;
   static const List<Tab> tabs = <Tab>[
     Tab(
       child: const Text(
         "Personal",
-        style: TextStyle(fontSize: 18, color: Colors.black),
+        style: TextStyle(fontSize: 18, color: gainsboro),
       ),
     ),
     Tab(
       child: const Text(
         "Work",
-        style: TextStyle(fontSize: 18, color: Colors.black),
+        style: TextStyle(fontSize: 18, color: gainsboro),
       ),
     )
   ];
@@ -38,19 +41,24 @@ class _HomeState extends State<Home> {
 
   initSharedPreferences() async {
     sharedPreferences = await SharedPreferences.getInstance();
+    //await sharedPreferences.clear();
     loadData();
   }
 
   void saveData() {
     List<String> slist =
-        _found.map((item) => json.encode(item.toMap())).toList();
-    sharedPreferences.setStringList("list", slist);
-    //print(slist);
+        personallist.map((item) => json.encode(item.toMap())).toList();
+    sharedPreferences.setStringList("personallist", slist);
+    slist = worklist.map((item) => json.encode(item.toMap())).toList();
+    sharedPreferences.setStringList("worklist", slist);
   }
 
   void loadData() {
-    List<String> slist = sharedPreferences.getStringList("list")!;
-    _found = slist.map((item) => ToDo.fromMap(json.decode(item))).toList();
+    List<String> slist = sharedPreferences.getStringList("personallist")!;
+    personallist =
+        slist.map((item) => ToDo.fromMap(json.decode(item))).toList();
+    slist = sharedPreferences.getStringList("worklist")!;
+    worklist = slist.map((item) => ToDo.fromMap(json.decode(item))).toList();
     setState(() {});
   }
 
@@ -64,40 +72,42 @@ class _HomeState extends State<Home> {
     return DefaultTabController(
       length: 2,
       child: Scaffold(
-        backgroundColor: const Color(0xFFEEEFF5),
+        backgroundColor: eerieblack,
         appBar: AppBar(
-            backgroundColor: const Color(0xFFEEEFF5),
-            elevation: 0,
-            title: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Icon(
-                  Icons.menu,
-                  color: Color(0xFF3a3a3a),
-                  size: 30,
-                ),
-                SizedBox(
-                  height: 40,
-                  width: 40,
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(20),
-                    child: Image.asset("assets/image/46.jpg"),
-                  ),
-                )
-              ],
-            ),
-            bottom: PreferredSize(
-              preferredSize: _tabBar.preferredSize,
-              child: Material(
-                color: Colors.white,
-                child: _tabBar,
+          shadowColor: charcoal,
+          elevation: 2,
+          backgroundColor: eerieblack,
+          title: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Icon(
+                Icons.menu,
+                color: gainsboro,
+                size: 30,
               ),
-            )),
+              SizedBox(
+                height: 40,
+                width: 40,
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(20),
+                  child: Image.asset("46.jpg"),
+                ),
+              )
+            ],
+          ),
+          bottom: PreferredSize(
+            preferredSize: _tabBar.preferredSize,
+            child: Material(
+              color: eerieblack,
+              child: _tabBar,
+            ),
+          ),
+        ),
         body: Container(
           child: TabBarView(
             children: [
               Container(child: buildPersonalColumn()),
-              Container(child: Text("Other")),
+              Container(child: buildWorkColumn()),
             ],
           ),
         ),
@@ -107,36 +117,19 @@ class _HomeState extends State<Home> {
 
   TabBar get _tabBar => TabBar(
         tabs: tabs,
+        indicatorColor: gainsboro,
       );
 
   Column buildWorkColumn() {
     return Column(
       children: [
         Expanded(
-            child: Scaffold(
-          body: Expanded(
-            child: Material(
-              color: const Color(0xFFEEEFF5),
-              child: ListView(
-                children: [Text("list2")],
-              ),
-            ),
-          ),
-        )),
-      ],
-    );
-  }
-
-  Column buildPersonalColumn() {
-    return Column(
-      children: [
-        Expanded(
           child: Material(
-            color: const Color(0xFFEEEFF5),
+            color: eerieblack,
             child: ListView(
               padding: EdgeInsets.all(15),
               children: [
-                for (ToDo todoo in _found.reversed)
+                for (ToDo todoo in worklist.reversed)
                   ToDoItem(
                     todo: todoo,
                     onToDoChanged: _handleToDoChange,
@@ -157,7 +150,7 @@ class _HomeState extends State<Home> {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 20, vertical: 5),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: gainsboro,
                     boxShadow: const [
                       BoxShadow(
                         color: Colors.grey,
@@ -181,10 +174,84 @@ class _HomeState extends State<Home> {
                 ),
                 child: ElevatedButton(
                   onPressed: () {
-                    _addToDoItem(_toDoController.text);
+                    _addToDoItem(_toDoController.text, false);
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.blue,
+                    backgroundColor: bluetiful,
+                    minimumSize: const Size(60, 60),
+                    elevation: 10,
+                  ),
+                  child: const Text(
+                    "+",
+                    style: TextStyle(fontSize: 40),
+                  ),
+                ),
+              )
+            ],
+          ),
+        )
+      ],
+    );
+  }
+
+  Column buildPersonalColumn() {
+    return Column(
+      children: [
+        Expanded(
+          child: Material(
+            color: eerieblack,
+            child: ListView(
+              padding: EdgeInsets.all(15),
+              children: [
+                for (ToDo todoo in personallist.reversed)
+                  ToDoItem(
+                    todo: todoo,
+                    onToDoChanged: _handleToDoChange,
+                    onDeleteItem: _deleteToDoItem,
+                  ),
+              ],
+            ),
+          ),
+        ),
+        Align(
+          alignment: Alignment.bottomCenter,
+          child: Row(
+            children: [
+              Expanded(
+                child: Container(
+                  margin:
+                      const EdgeInsets.only(bottom: 20, right: 20, left: 20),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 20, vertical: 5),
+                  decoration: BoxDecoration(
+                    color: gainsboro,
+                    boxShadow: const [
+                      BoxShadow(
+                        color: Colors.grey,
+                        offset: Offset(0.0, 0.0),
+                        blurRadius: 10.0,
+                        spreadRadius: 0.0,
+                      ),
+                    ],
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: TextField(
+                      controller: _toDoController,
+                      decoration: const InputDecoration(
+                          hintText: "Add new todo", border: InputBorder.none)),
+                ),
+              ),
+              Container(
+                margin: const EdgeInsets.only(
+                  bottom: 20,
+                  right: 20,
+                ),
+                child: ElevatedButton(
+                  onPressed: () {
+                    _addToDoItem(_toDoController.text, true);
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: bluetiful,
                     minimumSize: const Size(60, 60),
                     elevation: 10,
                   ),
@@ -208,19 +275,31 @@ class _HomeState extends State<Home> {
     saveData();
   }
 
-  void _deleteToDoItem(String id) {
+  void _deleteToDoItem(ToDo todo) {
+    print(todo.personal);
     setState(() {
-      _found.removeWhere((item) => item.id == id);
+      if (todo.personal) {
+        personallist.removeWhere((item) => item.id == todo.id);
+      } else {
+        worklist.removeWhere((item) => item.id == todo.id);
+      }
     });
     saveData();
   }
 
-  void _addToDoItem(String todo) {
+  void _addToDoItem(String todo, bool personal) {
     setState(() {
-      _found.add(ToDo(
-        id: DateTime.now().millisecondsSinceEpoch.toString(),
-        toDoText: todo,
-      ));
+      if (personal) {
+        personallist.add(ToDo(
+            id: DateTime.now().millisecondsSinceEpoch.toString(),
+            toDoText: todo,
+            personal: personal));
+      } else {
+        worklist.add(ToDo(
+            id: DateTime.now().millisecondsSinceEpoch.toString(),
+            toDoText: todo,
+            personal: personal));
+      }
     });
     _toDoController.clear();
     saveData();
@@ -229,15 +308,15 @@ class _HomeState extends State<Home> {
   void _runFilter(String keyword) {
     List<ToDo> results = [];
     if (keyword.isEmpty) {
-      results = _found;
+      results = personallist;
     } else {
-      results = _found
+      results = personallist
           .where((item) =>
               item.toDoText!.toLowerCase().contains(keyword.toLowerCase()))
           .toList();
     }
     setState(() {
-      _found = results;
+      personallist = results;
     });
   }
 
@@ -245,7 +324,7 @@ class _HomeState extends State<Home> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 15),
       decoration: BoxDecoration(
-          color: Colors.white, borderRadius: BorderRadius.circular(20)),
+          color: gainsboro, borderRadius: BorderRadius.circular(20)),
       child: TextField(
         onChanged: (value) => _runFilter(value),
         decoration: const InputDecoration(
@@ -266,7 +345,7 @@ class _HomeState extends State<Home> {
 
   AppBar _buildAppBar() {
     return AppBar(
-      backgroundColor: const Color(0xFFEEEFF5),
+      backgroundColor: eerieblack,
       elevation: 0,
       title: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -281,7 +360,7 @@ class _HomeState extends State<Home> {
             width: 40,
             child: ClipRRect(
               borderRadius: BorderRadius.circular(20),
-              child: Image.asset("assets/image/46.jpg"),
+              child: Image.asset("46.jpg"),
             ),
           )
         ],

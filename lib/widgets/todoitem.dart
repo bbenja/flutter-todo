@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:todoapp/model/todo.dart';
+import 'package:todoapp/assets/colors.dart';
 
 class ToDoItem extends StatelessWidget {
   final ToDo todo;
@@ -21,17 +22,20 @@ class ToDoItem extends StatelessWidget {
         onTap: () {
           onToDoChanged(todo);
         },
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        shape: RoundedRectangleBorder(
+          side: BorderSide(color: charcoal, width: 1),
+          borderRadius: BorderRadius.circular(20),
+        ),
         contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 2),
-        tileColor: Colors.white,
+        tileColor: raisinblack,
         leading: Icon(
             todo.isDone ? Icons.check_box : Icons.check_box_outline_blank,
-            color: Colors.blue),
+            color: persiangreen),
         title: Text(
           todo.toDoText!,
           style: TextStyle(
             fontSize: 16,
-            color: Colors.black,
+            color: gainsboro,
             decoration: todo.isDone ? TextDecoration.lineThrough : null,
           ),
         ),
@@ -41,13 +45,13 @@ class ToDoItem extends StatelessWidget {
           height: 35,
           width: 35,
           decoration: BoxDecoration(
-              color: Colors.red, borderRadius: BorderRadius.circular(5)),
+              color: popstar, borderRadius: BorderRadius.circular(5)),
           child: IconButton(
-            color: Colors.white,
+            color: gainsboro,
             iconSize: 18,
             icon: const Icon(Icons.delete),
             onPressed: () {
-              onDeleteItem(todo.id);
+              onDeleteItem(todo);
             },
           ),
         ),
