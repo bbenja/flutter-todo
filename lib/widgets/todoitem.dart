@@ -45,7 +45,9 @@ class ToDoItem extends StatelessWidget {
           height: 35,
           width: 35,
           decoration: BoxDecoration(
-              color: popstar, borderRadius: BorderRadius.circular(5)),
+            color: popstar,
+            borderRadius: BorderRadius.circular(5),
+          ),
           child: IconButton(
             color: gainsboro,
             iconSize: 18,

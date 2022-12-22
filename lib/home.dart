@@ -106,8 +106,8 @@ class _HomeState extends State<Home> {
         body: Container(
           child: TabBarView(
             children: [
-              Container(child: buildPersonalColumn()),
-              Container(child: buildWorkColumn()),
+              Container(child: buildColumn(personallist)),
+              Container(child: buildColumn(worklist)),
             ],
           ),
         ),
@@ -120,91 +120,41 @@ class _HomeState extends State<Home> {
         indicatorColor: gainsboro,
       );
 
-  Column buildWorkColumn() {
-    return Column(
-      children: [
-        Expanded(
-          child: Material(
-            color: eerieblack,
-            child: ListView(
-              padding: EdgeInsets.all(15),
-              children: [
-                for (ToDo todoo in worklist.reversed)
-                  ToDoItem(
-                    todo: todoo,
-                    onToDoChanged: _handleToDoChange,
-                    onDeleteItem: _deleteToDoItem,
-                  ),
-              ],
-            ),
-          ),
-        ),
-        Align(
-          alignment: Alignment.bottomCenter,
-          child: Row(
-            children: [
-              Expanded(
-                child: Container(
-                  margin:
-                      const EdgeInsets.only(bottom: 20, right: 20, left: 20),
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 20, vertical: 5),
-                  decoration: BoxDecoration(
-                    color: gainsboro,
-                    boxShadow: const [
-                      BoxShadow(
-                        color: Colors.grey,
-                        offset: Offset(0.0, 0.0),
-                        blurRadius: 10.0,
-                        spreadRadius: 0.0,
-                      ),
-                    ],
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: TextField(
-                      controller: _toDoController,
-                      decoration: const InputDecoration(
-                          hintText: "Add new todo", border: InputBorder.none)),
-                ),
-              ),
-              Container(
-                margin: const EdgeInsets.only(
-                  bottom: 20,
-                  right: 20,
-                ),
-                child: ElevatedButton(
-                  onPressed: () {
-                    _addToDoItem(_toDoController.text, false);
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: bluetiful,
-                    minimumSize: const Size(60, 60),
-                    elevation: 10,
-                  ),
-                  child: const Text(
-                    "+",
-                    style: TextStyle(fontSize: 40),
-                  ),
-                ),
-              )
-            ],
-          ),
-        )
-      ],
+  Widget proxyDecorator(Widget child, int index, Animation<double> animation) {
+    return AnimatedBuilder(
+      animation: animation,
+      builder: (BuildContext context, Widget? child) {
+        return Material(
+          elevation: 10,
+          color: burnsienna.withOpacity(0.0),
+          shadowColor: persiangreen.withOpacity(0.1),
+          child: child,
+        );
+      },
+      child: child,
     );
   }
 
-  Column buildPersonalColumn() {
+  Column buildColumn(List<ToDo> list) {
     return Column(
       children: [
         Expanded(
           child: Material(
             color: eerieblack,
-            child: ListView(
+            child: ReorderableListView(
+              proxyDecorator: proxyDecorator,
+              onReorder: (oldIndex, newIndex) {
+                setState(() {
+                  if (newIndex > oldIndex) newIndex--;
+                  final item = list.removeAt(oldIndex);
+                  list.insert(newIndex, item);
+                });
+              },
               padding: EdgeInsets.all(15),
               children: [
-                for (ToDo todoo in personallist.reversed)
+                for (ToDo todoo in list)
                   ToDoItem(
+                    key: ValueKey(todoo),
                     todo: todoo,
                     onToDoChanged: _handleToDoChange,
                     onDeleteItem: _deleteToDoItem,
@@ -248,7 +198,7 @@ class _HomeState extends State<Home> {
                 ),
                 child: ElevatedButton(
                   onPressed: () {
-                    _addToDoItem(_toDoController.text, true);
+                    _addToDoItem(_toDoController.text, list);
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: bluetiful,
@@ -287,18 +237,22 @@ class _HomeState extends State<Home> {
     saveData();
   }
 
-  void _addToDoItem(String todo, bool personal) {
+  void _addToDoItem(String todo, List<ToDo> list) {
     setState(() {
-      if (personal) {
-        personallist.add(ToDo(
-            id: DateTime.now().millisecondsSinceEpoch.toString(),
-            toDoText: todo,
-            personal: personal));
+      if (list == personallist) {
+        personallist.insert(
+            0,
+            ToDo(
+                id: DateTime.now().millisecondsSinceEpoch.toString(),
+                toDoText: todo,
+                personal: true));
       } else {
-        worklist.add(ToDo(
-            id: DateTime.now().millisecondsSinceEpoch.toString(),
-            toDoText: todo,
-            personal: personal));
+        worklist.insert(
+            0,
+            ToDo(
+                id: DateTime.now().millisecondsSinceEpoch.toString(),
+                toDoText: todo,
+                personal: false));
       }
     });
     _toDoController.clear();
